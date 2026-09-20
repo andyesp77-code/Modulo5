@@ -17,7 +17,7 @@ blanquear o cambiar claves y eliminar usuarios, salvo el administrador.
 En el menú de cajero, el usuario puede consultar saldo, retirar dinero,
 depositar dinero y cambiar su propia clave.
 
-****RESUMEN: Usuario maneja el estado y las operaciones del usuario
+****RESUMEN: Clase Usuario maneja el estado y las operaciones del usuario
 el script principal maneja el flujo del programa y las validaciones de entrada ******
 -----------------------------------------------------------------------------------
 Se fuerza un saldo fijo de 100000 pesos argentinos para poder operar con la cuenta.
@@ -29,7 +29,8 @@ class Usuario {
     this.nombre = nombre;
     this.clave = clave;
   }
-
+//Operaciones que requieren usar o modificar los datos de una instancia especifica de un usuario
+//Metodos que requideren instancia de usuario
   validarClave(claveIngresada) {
     return this.clave === claveIngresada;
   }
@@ -44,14 +45,9 @@ class Usuario {
     console.log(`La clave de ${this.nombre} fue blanqueada. Nueva clave: 1111`);
   }
 
-  esAdmin() {
-    return this.nombre.toUpperCase() === "ADMIN";
-  }
 
-  mostrarDatos() {
-    console.log(`${this.nombre} - ${this.clave}`);
-  }
-
+//Metodos generales de la clase que no requieren una instancia de usuario, sino que trabaja sobre la coleccion
+//Por ese motivo las declaro como static
   static buscarUsuario(nombre, usuarios) {
     return usuarios.find((usuario) => usuario.nombre === nombre);
   }
@@ -66,17 +62,6 @@ class Usuario {
     return usuario.validarClave(clave);
   }
 
-  static validarNombre(nombre) {
-    return nombre !== null && nombre.trim() !== "";
-  }
-
-  static validarClaveNumerica(clave) {
-    return clave !== null && !isNaN(clave);
-  }
-
-  static existeUsuario(nombre, usuarios) {
-    return usuarios.some((usuario) => usuario.nombre === nombre);
-  }
 }
 
 // usuarios registrados en el sistema (Incluye el Administrador) - arrays de objetos
@@ -100,7 +85,7 @@ let valor = 0;
 function listarUsuarios() {
     console.log("Usuarios registrados:");
     for (const usuario of usuariosRegistrados) {
-        usuario.mostrarDatos();
+         console.log(`${usuario.nombre} - ${usuario.clave}`);
     }
 }
 
@@ -118,16 +103,15 @@ function blanquearClave(nombreUsuario) {
     usuario.blanquearClave();
 }
 
-function cambiarClaveDeUsuario(nombreUsuario, nuevaClave) {
+function cambiarClaveDeUsuario(nombreUsuario, nuevaClave) { //Tambien se usa en el menu Cajero para cambiar la clave del usuario logueado
     if (nombreUsuario === null || nuevaClave === null) {
         console.log("Operación cancelada.");
         return;
     }
 
     nombreUsuario = nombreUsuario.trim().toUpperCase();
-    nuevaClave = parseInt(nuevaClave.trim());
-
-    if (!Usuario.validarNombre(nombreUsuario) || !Usuario.validarClaveNumerica(nuevaClave)) {
+   
+    if (nombreUsuario === "" || isNaN(nuevaClave)) {
         console.log("El nombre es obligatorio y la clave debe ser un número.");
         return;
     }
@@ -173,12 +157,12 @@ function registroUsuario(nombre, clave) {
     nombre = nombre.trim().toUpperCase();
     clave = parseInt(clave);
 
-    if (!Usuario.validarNombre(nombre) || !Usuario.validarClaveNumerica(clave)) {
+    if (nombre.trim() === "" || isNaN(clave)) {
         console.log("El nombre es obligatorio y la clave debe ser un número.");
         return;
     }
 
-    if (Usuario.existeUsuario(nombre, usuariosRegistrados)) {
+    if (Usuario.buscarUsuario(nombre, usuariosRegistrados)) {
         console.log("El usuario ya está registrado.");
         return;
     }
@@ -188,7 +172,7 @@ function registroUsuario(nombre, clave) {
 }
 
 
-//*****Funciones de validacion*****
+//*****Funciones de validacion de ingreso de dato*****
 function solicitarDato(mensaje) {
     let dato = prompt(mensaje);
 
@@ -287,22 +271,17 @@ function depositoDinero(valor) {
 let nombre = "";
 
 while (intentos < 3 && !login) {
-    let nombreIngresado = prompt("Ingrese su nombre de usuario");
+    //let nombreIngresado = prompt("Ingrese su nombre de usuario");
 
-    if (nombreIngresado === null) {
-        console.log("Operación cancelada.");
-        break;
-    }
-
+    let nombreIngresado = solicitarDato("Ingrese el nombre del usuario");
+    if (nombreIngresado === null) break;
+   
     nombre = nombreIngresado.trim().toUpperCase();
 
-    let claveIngresada = prompt("Ingrese su clave de 4 dígitos");
+    let claveIngresada = solicitarDato("Ingrese su clave de 4 dígitos");
 
-    if (claveIngresada === null) {
-        console.log("Operación cancelada.");
-        break;
-    }
-
+    if (claveIngresada === null) break;
+    
     if (Usuario.validarUsuario(nombre, parseInt(claveIngresada.trim()), usuariosRegistrados)) {
         login = true;
         console.log("Acceso concedido. Puede operar con su cuenta.");
@@ -318,7 +297,7 @@ if (!login && intentos >= 3) {
 
 const usuarioActual = Usuario.buscarUsuario(nombre, usuariosRegistrados);
 
-if (login && usuarioActual && usuarioActual.esAdmin()) {
+if (login && usuarioActual && usuarioActual.nombre.toUpperCase() === "ADMIN") { 
     console.log("Hola, ADMIN. Bienvenido al panel administrativo");
     menuAdmin();
 } else if (login) {
